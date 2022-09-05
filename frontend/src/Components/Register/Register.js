@@ -1,49 +1,72 @@
 import axios from 'axios'
-import {Component} from 'react'
 import {Link} from 'react-router-dom'
 import { baseUrl } from '../../Shared/baseUrl'
+import React from 'react'
 
-class Register extends Component{
+export default function Register(props) {
 
-    constructor(props){
-        super(props);
-        this.state = {
-            username: '',
-            password: '',
-            confirmPassword: ''
-        }
-        
-    }
+    const [state, setState] = React.useState({
+        username: '',
+        password: '',
+        confirmPassword: '',
+        mode: 'entry'
+    })
 
-    handleInputChange = (event) => {
+    function handleInputChange(event) {
         event.preventDefault()
-        this.setState({
-            [event.target.name]: event.target.value
-        })
+        setState({...state, [event.target.name]: event.target.value})
     }
 
-    handleSubmit = () => {
-        const data = {username: this.state.username, password: this.state.password, confirmPassword: this.state.confirmPassword, role: 'USER'}
-        if(this.state.password === this.state.confirmPassword){
-            axios.post(baseUrl + "/register", data)
-        }else{
+    function handleSubmit(e) {
+        e.preventDefault()
+        const data = {username: state.username, password: state.password, confirmPassword: state.confirmPassword, role: 'USER'}
+        let lowercase = 0
+        let uppercase = 0
+        let digit = 0
+        if(state.password !== state.confirmPassword) {
             alert("Password and Confirm Password must match!!!")
+            return
         }
+        if(state.password.length < 8) {
+            alert("Password must be at least 8 characters long!!!")
+            return
+        }
+        for(let i = 0; i < state.password.length; i++) {
+            if(isNaN(state.password.charAt(i))) {
+                if(state.password.charAt(i) === state.password.charAt(i).toUpperCase()) uppercase++
+                if(state.password.charAt(i) === state.password.charAt(i).toLowerCase()) lowercase++
+            }
+            else digit++
+        }
+        if(!(state.username.includes('@') && state.username.includes('.'))) {
+            alert("A valid email address must be entered.")
+            return
+        }
+        if(lowercase && uppercase && digit){
+            axios.post(baseUrl + "/register", data)
+            .then(function (response){
+                setState({...state, mode: "ready"})
+            })
+            .catch(function (error){
+                alert("The username (email) already exists!!!")
+            })
+        }
+        else alert("Password must contain at least one capital letter, one lowercase letter and one number!!!")
     }
 
-    render(){
-        return(
-            <div>
+    return(
+        <div>
+            {state.mode==="entry" && <form>
                 <h1>Create Account</h1>
                 <label class="sr-only">Username</label>
                 <input
-                    type="text"
+                    type="email"
                     id="username"
                     name="username"
                     class="form-control"
-                    placeholder="Username"
+                    placeholder="Email"
                     v-model="user.username"
-                    onChange={this.handleInputChange}
+                    onChange={handleInputChange}
                     required
                 />
                 <label class="sr-only">Password</label>
@@ -54,7 +77,7 @@ class Register extends Component{
                     class="form-control"
                     placeholder="Password"
                     v-model="user.password"
-                    onChange={this.handleInputChange}
+                    onChange={handleInputChange}
                     required
                 />
                 <input
@@ -64,14 +87,13 @@ class Register extends Component{
                     class="form-control"
                     placeholder="Confirm Password"
                     v-model="user.password"
-                    onChange={this.handleInputChange}
+                    onChange={handleInputChange}
                     required
                 />
                 <Link to="/login">Have an account?</Link>
-                <button type="submit" onClick={this.handleSubmit}>Sign in</button>
-            </div>
-        )
-    }
+                <input type="submit" onClick={handleSubmit} />
+            </form>}
+            {state.mode==="ready" && <Link to="/login">Sign In</Link>}
+        </div>
+    )
 }
-
-export default Register;
