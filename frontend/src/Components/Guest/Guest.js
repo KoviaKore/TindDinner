@@ -16,61 +16,61 @@ export default function Guest(props) {
         getInvitation()
     }, [])
 
+    React.useEffect(() => {
+        discoverCandidates()
+    }, [options])
+
+    React.useEffect(() => {
+        displayCandidates()
+    }, [choices])
+    
+
     function getInvitation() {
         axios.get(baseUrl + "/request/" + props.invitationId)
         .then(function (response){
             setHost(response.data.creator.username)
             if(isExpired(response.data.decisionDateTime)) setExpired(true)
             setOptions(response.data.restaurantsByRequest)
-
-            // DUMMY DATA
-            setOptions([2001, 2002])
-            // END DUMMY DATA
-
         })
     }
 
-    function discoverCandidates() { // INSERT [GET RESTAURANTS BY ID] AND ASSIGN TO choices BY ITERATNG THROUGH options (will construct a new array of objects)
-        // Add a field to each object - voted: "none" - set to either "up" or "down" in thumbs-up or thumbs-down selection
-
-        // axios.get(baseUrl + "/request/" + props.invitationId)
-        // .then(function (response){
-        //     setChoices(response.data)
-        //
-        //     displayCandidates()
-        //  })
+    function discoverCandidates() {
+        if(options.length === 0) return
+        let buildChoices = []
+        for(let i = 0; i < options.length; i++) {
+            options[i].voted = "none"
+            buildChoices.push(options[i])
+            setChoices(buildChoices)
+        }
     }
 
-    function thumbsUp(event) {
+    function thumbsUp(event) { // Needs to refresh render
         const choiceId = event.target.id
-        //set choice.voted to "up"
+        let choiceList = choices
+        for(let i = 0; i < choiceList.length; i++) {
+            if(choiceList[i].restaurantId == choiceId) choiceList[i].voted = "up"
+        }
+        setChoices(choiceList)
     }
 
-    function thumbsDown(event) {
+    function thumbsDown(event) { // Needs to refresh render
         const choiceId = event.target.id
-        //set choice.voted to "down"
+        let choiceList = choices
+        for(let i = 0; i < choiceList.length; i++) {
+            if(choiceList[i].restaurantId == choiceId) choiceList[i].voted = "down"
+        }
+        setChoices(choiceList)
     }
-
-                    // function addRestaurantToSelections(event) { // REFERENCE FOR FUNCTION BEHAVIOR
-                    //     const choiceId = event.target.id
-                    //     if(selections.length >= 5) {
-                    //         alert("You can only select up to five restaurants per invitation!!!")
-                    //         return
-                    //     }
-                    //     if(selections.length === 0) setSelections([choiceId])
-                    //     else {
-                    //         for(let i = 0; i < selections.length; i++) {
-                    //             if(selections[i] == choiceId) {
-                    //                 alert("This restaurant is already selected for this invitation!!!")
-                    //                 return
-                    //             }
-                    //             setSelections([...selections, choiceId])
-                    //         }
-                    //     }
-                    // }
     
     function submitPreferences() {
-        // iterate through choices.voted and delete all "down" entries
+        for(let i = 0; i < choices.length; i++) {
+            if(choices[i].voted === "down") {
+                // axios.delete(baseUrl + "/delete/" + choices[i].restaurantId + props.invitationId) //adjust this after endpoint is settled
+                // .then(function (response){
+                //     // catch errors, etc.
+                // })
+            }
+        }
         setSubmitted(true)
     }
 
@@ -116,7 +116,8 @@ export default function Guest(props) {
                 {!expired &&
                     <div className="guest--unexpiredcontainer">
                         <h3 className="guest--title">Restaurant Options</h3>
-                        <h4 className="guest--candidates">{discoverCandidates()}</h4>
+                        {choices.length > 0 && <div className="guest--candidates">{displayCandidates()}</div>}
+                        {choices.length === 0 && <div className="guest--empty">There are no restaurants to display</div>}
                         <button className="guest--submit" onClick={submitPreferences}>Submit Your Preferences</button>
                     </div>
                 }

@@ -424,7 +424,6 @@
 
 .link--link {
     color:#decdff;
-    background-color:#6b3377;
     width: 300px;
     margin: 10px;
     margin-bottom: 20px;
@@ -443,6 +442,62 @@
 
 .review--home {
     margin-bottom: 20px;
+}
+
+.finalist--container {
+    
+}
+
+.finalist--completed {
+    color:#e0b3f5
+}
+
+.finalist--completedlist {
+    list-style: none;
+}
+
+.finalist--completedlistitem {
+    
+}
+
+.finalist--expireddate {
+    color:#177245
+}
+
+.finalist--pending {
+    color:#e0b3f5
+}
+
+.finalist--pendinglist {
+    list-style: none;
+}
+
+.finalist--pendinglistitem {
+    
+}
+
+.finalist--pendingdate {
+    color:#611c17
+}
+
+.invitedguests--title {
+
+}
+
+.invitedguests--noguests {
+
+}
+
+.invitedguests--name {
+
+}
+
+.preferred--title {
+    
+}
+
+.preferred--none {
+    
 }
 
 .guest--container {
@@ -475,16 +530,28 @@
 
 }
 
-.candidates--list {
+.guest--empty {
+
+}
+
+.guest--list {
     
 }
 
-.candidates--listitem {
-    
+.guest--listitem {
+    width: 320px;
+    list-style: none;
+    margin: 30px;
+    margin-left: 0px;
+    background-color:#e4c3f1;
+    border: solid 1px #6b3377;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 
 .guest--up {
-
+    
 }
 
 .guest--down {
@@ -492,19 +559,19 @@
 }
 
 .guest--upselected {
-
+    background-color: #39d69d;
 }
 
 .guest--downselected {
-    
+    background-color: #f78080;
 }
 
 .guest--upunselected {
-
+    opacity: 0.5;
 }
 
 .guest--downunselected {
-    
+    opacity: 0.5;
 }
 
 .guest--submit {

@@ -4,6 +4,7 @@ import axios from 'axios'
 import { baseUrl } from '../../Shared/baseUrl'
 import isOpen from './isOpen';
 import isExpired from './isExpired';
+import beautifyDate from './beautifyDate';
 
 export default function Home(props) {
 
@@ -23,6 +24,8 @@ export default function Home(props) {
     const [decisionDate, setDecisionDate] = React.useState("")
 
     const [invitationId, setInvitationId] = React.useState("")
+    const [pending, setPending] = React.useState([])
+    const [expired, setExpired] = React.useState([])
 
     function clearState() {
         setZip("")
@@ -34,6 +37,8 @@ export default function Home(props) {
         setInvitedGuests([])
         setDecisionDate("")
         setInvitationId("")
+        setPending([])
+        setExpired([])
     }
 
     function getLocation() {
@@ -98,14 +103,14 @@ export default function Home(props) {
             alert("You can only select up to five restaurants per invitation!!!")
             return
         }
-        if(selections.length === 0) setSelections([choiceId])
+        if(selections.length === 0) setSelections([Number(choiceId)])
         else {
             for(let i = 0; i < selections.length; i++) {
                 if(selections[i] == choiceId) {
                     alert("This restaurant is already selected for this invitation!!!")
                     return
                 }
-                setSelections([...selections, choiceId])
+                setSelections([...selections, Number(choiceId)])
             }
         }
     }
@@ -189,22 +194,6 @@ export default function Home(props) {
         setInvitedGuests(workingGuests)
     }
 
-    function findUserIdByUsername(emailAddress) { // check fetch before implementing
-        // axios.get(baseUrl + "/find-user", emailAddress)
-        // .then(function (response){
-        //     console.log(response.data)
-        // })
-        return (Math.floor(Math.random() * 20) + 5000).toString()
-    }
-
-    function findUsernameByUserId(userNumber) { // check fetch before implementing
-        // axios.get(baseUrl + "/user/" + userNumber)
-        // .then(function (response){
-        //     console.log(response.data)
-        // })
-        return "test@this." + userNumber
-    }
-
     function updateSearchEmail(event) {
         setSearchEmail(event.target.value)
     }
@@ -230,50 +219,57 @@ export default function Home(props) {
             inviteeEmails: invitedGuests,
             decisionDateTime: decisionDateTime
         }
-        axios.post(baseUrl + '/send-request', {data: dataObject})
+        axios.post(baseUrl + '/send-request', dataObject)
         .then(function (response){
             if(response.data.length === 0) {
                 alert("There was a problem while saving the invitation!!!")
                 return
             }
-            console.log(response.data)
-            // setInvitationId(response.data) // finish the .path
-            // setMode("choices")
+            setInvitationId(response.data.requestId)
         })
-        // clearState()
-        // setMode("link")
+        setMode("link")
     }
 
     function reviewRequests() {
         setMode("review")
+        getRequests()
     }
 
-    function listRequests() { // check this once the DB has restaurants and guests in the table
+    function getRequests() { // Finished once the DB returns usernames in the request
         axios.get(baseUrl + "/request-by-creator/" + loadedUser.id)
         .then(function (response){
+            console.log(response)
             let pendingInvitations = [];
             let expiredInvitations = [];
             for(let i = 0; i < response.data.length; i++) {
                 if(isExpired(response.data[i].decisionDateTime)) expiredInvitations.push(response.data[i])
                 else pendingInvitations.push(response.data[i])
             }
+            setPending(pendingInvitations)
+            setExpired(expiredInvitations)
+        })
+    }
+
+    function listRequests() {
             return (
-                <div>
-                    <h3>Completed Requests</h3>
-                    <ul>
-                        {expiredInvitations.map((inv) => (
-                            <li>
-                                <h4>{inv.decisionDateTime}</h4>
+                <div className="finalist--container">
+                    <hr/>
+                    <h3 className="finalist--completed">Completed Requests</h3>
+                    <ul className="finalist--completedlist">
+                        {expired.map((inv) => (
+                            <li className="finalist--completedlistitem">
+                                <h4 className="finalist--expireddate">{beautifyDate(inv.decisionDateTime)}</h4>
                                 {displayInvitedGuests(inv)}
                                 {displayResults(inv)}
                             </li>
                         ))}
                     </ul>
-                    <h3>Pending Requests</h3>
-                    <ul>
-                        {pendingInvitations.map((inv) => (
-                            <li>
-                                <h4>{inv.decisionDateTime}</h4>
+                    <hr/>
+                    <h3 className="finalist--pending">Pending Requests</h3>
+                    <ul className="finalist--pendinglist">
+                        {pending.map((inv) => (
+                            <li className="finalist--pendinglistitem">
+                                <h4 className="finalist--pendingdate">{beautifyDate(inv.decisionDateTime)}</h4>
                                 {displayInvitedGuests(inv)}
                                 {displayResults(inv)}
                             </li>
@@ -281,17 +277,16 @@ export default function Home(props) {
                     </ul>
                 </div>
             )
-        })
     }
 
     function displayInvitedGuests(req) {
         return (
             <div>
-                <h4>Guests Invited</h4>
+                <h4 className="invitedguests--title">Guests Invited</h4>
                 <ul>
-                    {req.invitedUsers.length === 0 && <p>There are no guests to display.</p>}
+                    {req.invitedUsers.length === 0 && <p className="invitedguests--noguests">There are no guests to display.</p>}
                     {req.invitedUsers.map((invGuest) => (
-                        <li>{invGuest}</li>
+                        <li className="invitedguests--name">{invGuest}</li>
                     ))}
                 </ul>
             </div>
@@ -301,12 +296,27 @@ export default function Home(props) {
     function displayResults(req) {
         return (
             <div>
-                <h4>Restaurants Preferred</h4>
+                <h4 className="preferred--title">Restaurants Preferred</h4>
                 <ul>
-                    {req.restaurantsByRequest.length === 0 && <p>There are no restaurants to display.</p>}
+                    {req.restaurantsByRequest.length === 0 && <p className="preferred--none">There are no restaurants to display.</p>}
                     {req.restaurantsByRequest.map((finalist) => (
-                        <li>Restaurant ID: {finalist}</li>
+                        <li className="choices--listitem" id={finalist.restaurantId}>
+                            <h3 className="choices--name">{finalist.restaurantName}</h3>
+                            {finalist.thumbnailUrl && <img  className="choices--image" src={finalist.thumbnailUrl} Alt="Restaurant view"/>}
+                            <h4 className="choices--address">{finalist.address}</h4>
+                            {isOpen(finalist.hours) && <h4 className="choices--open">Open now</h4>}
+                            {!isOpen(finalist.hours) && <h4 className="choices--closed">Closed</h4>}
+                            <p className="choices--hours">{finalist.hours}</p>
+                            {finalist.phoneNumber &&
+                                <>
+                                    <h3 className="choices--phone">{finalist.phoneNumber}</h3>
+                                    <button className="choices--call">Call to order</button>
+                                </>
+                            }
+                            <h4 className="choices--type">{finalist.type}</h4>
+                        </li>
                     ))}
+                    <hr/>
                 </ul>
             </div>
         )
@@ -358,7 +368,7 @@ export default function Home(props) {
 
             {mode==="link" && <div className="link--container">
                 <h2 className="link--title">Invitation saved!  Here is the link your guests can visit to vote on your restaurant selections:</h2>
-                <h3 className="link--link">LINK TO REQUEST</h3>
+                <h3 className="link--link">{baseUrl + "/guest/" + invitationId}</h3>
             </div>}
 
             {mode==="review" && <div className="review--container">
